@@ -1,0 +1,79 @@
+---
+title: "Replicate!"
+author: "Seija Sirkiä"
+date: "Friday, February 05, 2016"
+output: pdf_document
+---
+
+Incidentally, I want this document to be replication reliable, so there's this:
+```{r}
+library(ggplot2)
+set.seed(105)
+funkydata<-data.frame(
+  subject=factor(1:20,levels=1:20,labels=1:20),
+  funkiness=rnorm(20,sd=0.8),
+  group=factor(rep(c("Trt","Ctrl"),each=10),levels=c("Trt","Ctrl")))
+```
+
+Suppose there is a property in people you are interested in affecting by your new treatment. In real world it could be something like blood pressure, or the concentration of some chemical in their blood. For this tutorial let's call that property *funkiness*, in other words you are measuring how funky people are. And you have a treatment that you claim is going to make people funkier (hopefully being funkier is desirable, otherwise you are being rather evil).
+
+Let's say the level of funkiness in untreated population is about 0. But in practice people have slightly different levels of funkiness, just because people are different. So if you pick 20 people and measure their funkiness, you might get something like this:
+```{r}
+ggplot(funkydata,aes(subject,funkiness))+geom_point()+expand_limits(y=c(-3,3))
+```
+
+Except that also the measurements vary a little, due to the technique or maybe the funkiness of people varies a little depending on the time of day or what ever such thing. Or both. Usually many. So instead of seeing the actual individual general average levels, you see something more or less close to it, like in here:
+```{r}
+meas.sd<-0.3
+funkydata<-rbind(within(funkydata,type<-"real"),
+                 within(funkydata,{funkiness<-funkiness+rnorm(20,sd=meas.sd)
+                                   type<-"measured"}))
+ggplot(funkydata)+geom_point(aes(x=subject,y=funkiness,color=type))+
+expand_limits(y=c(-3,3))
+```
+
+Next, suppose that the first 10 people in this sample are treated, and that your treatment really does raise their funkiness. So the result now becomes like this (call this the first big picture):
+```{r}
+trteff<-2
+funkydata<-within(funkydata,funkiness<-funkiness+trteff*(group=="Trt"))
+ggplot(funkydata)+geom_point(aes(x=subject,y=funkiness,color=type))+
+expand_limits(y=c(-3,3))
+```
+
+Well that looks pretty clear doesn't it? And indeed it is. But suppose you see only the middle part of this picture, or in other words, that you only have two replicates per group:
+```{r}
+funkyfour<-subset(funkydata,subject%in%9:12)
+ggplot(funkyfour)+geom_point(aes(x=subject,y=funkiness,color=type))+
+expand_limits(y=c(-3,3))
+``` 
+
+It still looks like the ones on the left are higher than the ones on the right, but remember that you don't actually know what the big picture looks like! You don't know how large the variation between the subjects is, except through what you're seeing here. So you don't know whether the real situation is like it was in the previous pictures, or if it is maybe more like this (call this the second big picture):
+```{r}
+funkierdata<-data.frame(
+  subject=factor(1:20,levels=1:20,labels=1:20),
+  funkiness=rnorm(20,sd=0.8+trteff/2),
+  group=factor(rep(c("Trt","Ctrl"),each=10),levels=c("Trt","Ctrl")))
+funkierdata<-rbind(within(funkierdata,type<-"real"),
+                 within(funkierdata,
+                        {funkiness<-funkiness+rnorm(20,sd=meas.sd)
+                         type<-"measured"}))
+funkierdata2<-rbind(subset(funkierdata,!(subject%in%9:12)),funkyfour)
+ggplot(funkierdata2)+geom_point(aes(x=subject,y=funkiness,color=type))+
+expand_limits(y=c(-3,3))
+```
+
+When you look at only the two measurements per group, you don't have much information on where the variation comes from, the treatment or individual differences. In other words, you can't really know if you have a tiny glimpse of the first big picture (treatment works), or the second big picture (a lot of variation). Obviously you need more measurements. But here comes the important part: **Measuring the same subjects over and over again does not give you more of the information you need!** That would look like this:
+```{r}
+ffr<-subset(funkyfour,type=="real")
+ffm<-subset(funkyfour,type=="measured")
+ffalot<-funkyfour
+for(i in 1:5)
+  {
+    ffm$funkiness<-ffr$funkiness+rnorm(4,sd=meas.sd)
+    ffalot<-rbind(ffalot,ffm)
+}
+ggplot(ffalot)+geom_point(aes(x=subject,y=funkiness,color=type))+
+expand_limits(y=c(-3,3))
+```
+
+This way you just get more information on the size of the variation due to measurement. You get more sure about the averages of these four subjects, and that the subjects are indeed on different levels of funkiness. But you learned exactly nothing new on whether the apparent difference in the average levels between the two *groups* is really due to your treatment, or if there is just a lot of variation between the individual average levels and these four just happened to line up with your hypothesis out of sheer randomness. It is far more unlikely that they randomly line up like that when you have **many replicates** . Real replicates, that is. 

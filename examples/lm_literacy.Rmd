@@ -1,0 +1,182 @@
+---
+title: P-value depends on both the effect size and the sample size
+output: html_notebook
+---
+
+I'm going to try and show you something about the interesting p-value in a simple linear regression model fit. The point I want to make is often repeated: a significant p-value does not mean that your treatment works, and a non-significant p-value does not mean it does not work. Here we go.
+
+```{r}
+library(tibble)
+library(dplyr)
+library(ggplot2)
+```
+
+First we need some data. We are going to create artificial data that follows the structure assumed by the linear model exactly. First we pick a sample size:
+```{r}
+N <- 10
+```
+Then we create a tibble data frame with some values for the explanatory (independent) variable:
+```{r}
+mydata <- tibble(x=seq(-2,2,length.out = N))
+```
+Now comes a rather important part: we pick values for the three paramaters for the model. Yes, there are three parameters. Were you thinking about two? The intercept and the slope? The third one is the variance of the error term (or standard deviation, easier to use), and is actually far more relevant than the other two. But here we go:
+```{r}
+a <- 1 #intercept
+b <- 1 #slope
+sigma <- 1 #s.d. of the error
+```
+and then we can create the data:
+```{r}
+mydata <- mutate(mydata, e=rnorm(N,0,sigma),
+                 Ey=a+b*x,
+                  y=a+b*x+e)
+```
+That last assignment should look very familiar: it's exactly the equation for the simple linear model, as promised. The line before that stands for the deterministic part of the model, the *expected* value of y. The actual observed y is that plus the random error.
+
+So here's the scatterplot of the y against the x:
+```{r}
+ggplot(mydata,aes(x,y))+geom_point()
+```
+Ok! Let me just try and force you to see what I want you to see. Here are the error terms:
+```{r}
+ggplot(mydata,aes(x,e))+geom_blank(aes(x,y))+geom_segment(aes(yend=0,xend=x))+
+  geom_point()+
+  geom_hline(yintercept = 0)
+```
+And here is the (true!) regression line:
+```{r}
+ggplot(mydata,aes(x,y))+geom_blank()+geom_abline(intercept = a,slope=b)
+```
+Now the two together:
+```{r}
+ggplot(mydata,aes(x,y))+geom_segment(aes(yend=Ey,xend=x))+
+  geom_point()+
+  geom_abline(intercept = a, slope = b)
+```
+And that's how you pretend the data was created. Now, with this artificial data that is actually true, but in real life you only have the scatter plot, and have to assume that the linear model idea makes sense, and then guess what the regression line is. That is what fitting the regression line means! (And there are lots more details we could go in to about that.) And this is how you do it:
+```{r}
+fit <- lm(y~x,mydata)
+mydata <- mutate(mydata,yfit=fitted.values(fit),resid=residuals(fit))
+```
+I already went and picked from the fit the guessed line, or rather, the individual values for y on that line (fitted values), and the differences between those and the observed values (residuals), and stuck them in to mydata. This is what it looks like:
+```{r}
+ggplot(mydata,aes(x,y))+geom_point()+
+  geom_smooth(method="lm",col="red",se=FALSE,lwd=0.5)+
+  geom_segment(aes(xend=x,yend=yfit),col="red")+
+  geom_point(aes(y=yfit),col="red",cex=3)
+```
+The bigger red dots are the fitted values - they are on the fitted line. The black dots are the observed values, and the red line segments represent the residuals. Pay attention to how these 
+
+Now the really interesting question here is usually this: is the true regression line actually horizontal, or is it sloped some way? This is the same question as "does y depend on x?". Hopefully you can see why. The true regression line shows what you should expect y to be for a given value of x, if there was no error of any kind. If bigger values of x mean bigger values of y, the true regression line slopes upward. If you'd expect the values of y to be the same on average, no matter what x is, then the true regression line would be horizontal.
+
+So how do you know if it is horizontal or not? Truth is, you don't. Remember, in reality, you don't even know if there is such thing as a true regression line! And in even more real reality, you usually know for a fact that this is not the case, but you pretend as if it were and carry on anyway. You can't ask the world directly if y depends on x, so this is what you do instead: you re-cast the question as "is the regression line, that I'm imagining, sloped or not?" 
+
+So, what you do is this: you try out the best possible horizontal line (that's actually just the mean of y) and then you try out the best possible sloped line, and see how much smaller the residuals get. Note that the sloped line will by definition always produce smaller residuals, even when there absoutely is no sloped line for real. It is indeed the best possible, the one with the smallest residuals. So, the residuals of the sloped line will always be smaller than the residuals of the horizontal line, and then you just need to know when the drop is so big that you should pay attention. And that's what the p-value is for.
+
+Look here. Let's try this artificial data with 0-slope this time:
+```{r}
+N <- 10 #sample size
+a <- 1 #intercept
+b <- 0 #slope
+sigma <- 1 #s.d. of the error
+mydata <- tibble(x=seq(-2,2,length.out = N))
+mydata <- mutate(mydata, e=rnorm(N,0,sigma),
+                 Ey=a+b*x,
+                  y=a+b*x+e)
+ggplot(mydata,aes(x,y))+geom_point()+geom_smooth(method="lm",se=FALSE)
+summary(lm(y~x,mydata))
+```
+You can see that the fitted line is sloped one way or another
+Try this several times and you see that the p-value varies from run to run. If you have the patience to try this 100 times, you should actually see it go below 0.05 about 5 times. By definition. That's what the p-value is!
+
+If you can't bother running that manually, here's an automatic simulation for 100 rounds:
+```{r}
+simN <- 100
+
+N <- 10 #sample size
+a <- 1 #intercept
+b <- 0 #slope
+sigma <- 1 #s.d. of the error
+
+p <- rep(0,simN)
+for (i in 1:simN) {
+  mydata <- tibble(x=seq(-2,2,length.out = N))
+  mydata <- mutate(mydata, e=rnorm(N,0,sigma),
+                   Ey=a+b*x,
+                   y=a+b*x+e)
+  p[i] <- coef(summary(lm(y~x,mydata)))[2,4]
+}
+sum(p<0.05)
+```
+And now back to the original version of the model, same thing:
+```{r}
+N <- 10 #sample size
+a <- 1 #intercept
+b <- 1 #slope
+sigma <- 1 #s.d. of the error
+mydata <- tibble(x=seq(-2,2,length.out = N))
+mydata <- mutate(mydata, e=rnorm(N,0,sigma),
+                 Ey=a+b*x,
+                  y=a+b*x+e)
+ggplot(mydata,aes(x,y))+geom_point()+geom_smooth(method="lm",se=FALSE)
+summary(lm(y~x,mydata))
+for (i in 1:simN) {
+  mydata <- tibble(x=seq(-2,2,length.out = N))
+  mydata <- mutate(mydata, e=rnorm(N,0,sigma),
+                   Ey=a+b*x,
+                   y=a+b*x+e)
+  p[i] <- coef(summary(lm(y~x,mydata)))[2,4]
+}
+sum(p<0.05)
+```
+So, here, you have a true slope, but if you repeat it you get the "it's significant!" only sometimes, not always. This is an important point: even if the slope is really there, the p-value might not see it, so to speak. This is due to the interplay of the effect size and the sample size. We will explore this further.
+
+First we make the effect size smaller by increasing the error variation:
+```{r}
+N <- 10 #sample size
+a <- 1 #intercept
+b <- 1 #slope
+sigma <- 10 #s.d. of the error
+mydata <- tibble(x=seq(-2,2,length.out = N))
+mydata <- mutate(mydata, e=rnorm(N,0,sigma),
+                 Ey=a+b*x,
+                  y=a+b*x+e)
+ggplot(mydata,aes(x,y))+geom_point()+geom_smooth(method="lm",se=FALSE)
+summary(lm(y~x,mydata))
+for (i in 1:simN) {
+  mydata <- tibble(x=seq(-2,2,length.out = N))
+  mydata <- mutate(mydata, e=rnorm(N,0,sigma),
+                   Ey=a+b*x,
+                   y=a+b*x+e)
+  p[i] <- coef(summary(lm(y~x,mydata)))[2,4]
+}
+sum(p<0.05)
+```
+The significant results basically disappear: this looks no different than the 0-slope case! Although you know for a fact that the slope is real. And even if the fitted model estimates roughly the correct value for the slope!
+
+Now we bring the significant results back, by increasing the sample size:
+```{r}
+N <- 1000 #sample size
+a <- 1 #intercept
+b <- 1 #slope
+sigma <- 10 #s.d. of the error
+mydata <- tibble(x=seq(-2,2,length.out = N))
+mydata <- mutate(mydata, e=rnorm(N,0,sigma),
+                 Ey=a+b*x,
+                  y=a+b*x+e)
+ggplot(mydata,aes(x,y))+geom_point()+geom_smooth(method="lm",se=FALSE)
+summary(lm(y~x,mydata))
+for (i in 1:simN) {
+  mydata <- tibble(x=seq(-2,2,length.out = N))
+  mydata <- mutate(mydata, e=rnorm(N,0,sigma),
+                   Ey=a+b*x,
+                   y=a+b*x+e)
+  p[i] <- coef(summary(lm(y~x,mydata)))[2,4]
+}
+sum(p<0.05)
+```
+Now it seems significant more often. Even though the slope is still almost non-existent compared to the error variation.
+
+The moral of the story is: The p-value is used inappropriately to be an arbiter between a real effect and a non-existent effect. It is inappropriate because the p-value can't do that. It is possible that you get a significant p-value just by accident, particularly if you try many times (false positive). It is possible that a very real effect does not show as statistically significant, because the sample size is too small for the effect size (false negative). 
+
+A tiny p-value does not mean that the effect is big, and that you should be happy for a "good result". It could mean that you should be sorry for wasting resources on a too large sample, when you could have done with less. On the other hand, having a sample size too small can also be a waste of resources, if you end up with a false negative. It is possible to do these calculations with assumed effect sizes even before anything is measured, in order to see what a suitable sample size would be. Sadly, this is not done nearly as often as it should be.

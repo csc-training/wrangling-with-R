@@ -1,0 +1,20 @@
+make sure you can import all of the data sets,
+including the ones with row names
+
+If you have your own data set with you, import that. Is it tidy? If not, tidy it up. 
+
+Tidy up all / some of the example data sets as needed.
+
+In the weather data set, you can try out monthly summaries and visualise those. Another thing you might want to look at is the relationship between the air pressure and temperature, windspeed and/or rain. High pressure in summer should be associated with warm weather, but in winter with cold weather. On the other hand, wind and rain are more likely during low pressure in both seasons.
+
+In the hki_liikennemaarat data set there are locations, names, coordinates
+and directions. How many locations / names / combinations thereof are there, actually? The answer is that the locations and names almost match each other 1 to 1, except that in three cases a name covers two locations, and all but one location have 2 directions. But how would you find out?
+
+There are 57 locations, with codes that have a letter (A to D, and F) and then a running index (different amounts). Can you figure out if they are related to areas of the city? (Yes: these are actually called "lines")
+
+Can you visualize the change of popularity of public transport in different locations over the years?
+
+
+
+
+
