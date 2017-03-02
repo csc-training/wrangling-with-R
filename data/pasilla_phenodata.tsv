@@ -1,0 +1,8 @@
+sample	original_name	chiptype	experiment	group	library_size	description	readtype
+treated1fb	treated1fb	not applicable	rna-seq	2		t1	1
+treated2fb	treated2fb	not applicable	rna-seq	2		t2	2
+treated3fb	treated3fb	not applicable	rna-seq	2		t3	2
+untreated1fb	untreated1fb	not applicable	rna-seq	1		un1	1
+untreated2fb	untreated2fb	not applicable	rna-seq	1		un2 	1
+untreated3fb	untreated3fb	not applicable	rna-seq	1		un3	2
+untreated4fb	untreated4fb	not applicable	rna-seq	1		un4	2
