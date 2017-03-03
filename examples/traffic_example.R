@@ -4,18 +4,17 @@ library(dplyr)
 library(ggplot2)
 
 #this is what the wizard gives you:
-traffic <- read_delim("data/hki_liikennemaarat.csv",
+traffic <- read_delim("http://www.hel.fi/hel2/tietokeskus/data/helsinki/ksv/hki_liikennemaarat.csv",
                       ";", escape_double = FALSE, trim_ws = TRUE)
 #which is nice, but encoding is wrong
-guess_encoding("data/hki_liikennemaarat.csv")
+guess_encoding("http://www.hel.fi/hel2/tietokeskus/data/helsinki/ksv/hki_liikennemaarat.csv")
 #ISO-8859-1 is the one you want here
-traffic <- read_delim("data/hki_liikennemaarat.csv",
+traffic <- read_delim("http://www.hel.fi/hel2/tietokeskus/data/helsinki/ksv/hki_liikennemaarat.csv",
                       ";", escape_double = FALSE, trim_ws = TRUE,
                       locale=locale(encoding="ISO-8859-1"))
 
 #about locations, names, and directions
 locs <- select(traffic,piste:suunta) %>% unique()
-tmp <- summarise(group_by(locs,nimi),n=n())
 tmp <- locs %>% group_by(nimi) %>% summarise(n=n()) 
 tmp <- tmp %>% filter(n!=2) %>% left_join(locs)
 
@@ -36,7 +35,7 @@ tmp <- ttraffic %>%
   filter(vtype%in%c("ha","la"),code=="F") %>% 
   select(subcode,vuosi,vtype,N) %>%
   group_by(subcode,vuosi,vtype) %>%
-  summarise_all(sum) %>%
+  summarise(N=sum(N)) %>%
   spread(vtype,N) %>%
   mutate(pubratio=ha/la)
 
