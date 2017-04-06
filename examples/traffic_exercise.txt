@@ -1,0 +1,52 @@
+Helsinki traffic data
+
+Work with the "Liikennemäärät Helsingissä" data from http://www.hri.fi/fi/dataset/liikennemaarat-helsingissa. The description is unfortunately only in Finnish, but on the other hand it is almost incomprehensible even if you know Finnish. Quick attempt of translation.
+
+"Traffic frequencies of vehicles (passenger cars, vans, lorries, trucks, buses, motorcycles) and trams at several counting locations in different areas of Helsinki since the year 2011.
+
+Counting has been performed hourly, except in rush hours (6.00-9.00 and 15.00-18.00) sequencing is 15 minutes. Clock times are starting clock times. Cross-sections of the counting locations are counted per direction (direction 1 is towards downtown, on line D D1-D13 to west.)
+
+The traffic in question is for weekdays Monday - Thursday. A day was chosen that in its distribution of time differs as little as possible from the average traffic in September and October. The frequencies have been calculated in September and October. For a large part frequencies are being counted using machines fulltime. Some locations are being counted using machines for roughly a week. Some small streets are counted only between 7-19 manually.
+
+The coordinate system for counting locations is ETRS-GK25 (EPSG 3879).
+
+ha=passenger cars
+pa=vans
+ka=lorries
+ra=trucks
+la=buses
+mp=motorcycles
+rv=trams
+
+Direction 1 is towards downtown, on line D D1-D13 to west.
+Time is a beginning hour or 15 minutes."
+
+In addition, the names of the variables are:
+piste=location
+nimi=name
+x_gk25
+y_gk25
+suunta=direction
+aika=time
+vuosi=year
+ha
+pa
+ka
+ra
+la
+mp
+rv
+autot=cars
+
+(The following activities are partially inspired by my own attempts to understand the nature of these data.)
+
+1) Read in the data, using correct character encoding.
+
+2) Consider the locations: How many locations are there in fact? Are there always two directions per location? Do the location, name and coordinates correspond to each other exactly? If not, which one of the three concepts defines a single, distinct location?
+
+3) Consider the location codes: They seem to be of the format "a letter and a number". Do the letters mean something? Didn't the description say something about "lines"? What would the locations look like if plotted using their coordinates?
+
+4) Now that we (think we) understand the locations, work with the actual data. Looking at the top of the data it would seem that the "autot"/"cars" is the sum of the other columns. But is it? Or just cars, like the name suggests?
+BONUS: what is actually going on with the location C18?
+
+5) Can you think of a way to see if the popularity of public transport has gone up or down?
