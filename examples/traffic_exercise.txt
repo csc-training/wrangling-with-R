@@ -38,7 +38,7 @@ mp
 rv
 autot=cars
 
-(The following activities are partially inspired by my own attempts to understand the nature of these data.)
+(The following activities are partially inspired by my own attempts to understand the nature of this dataset.)
 
 1) Read in the data, using correct character encoding.
 
