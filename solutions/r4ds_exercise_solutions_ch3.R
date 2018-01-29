@@ -1,4 +1,4 @@
-# solutions to the r4ds exercises
+# solutions to the r4ds exercises in chapter 3, visualisation
 
 library(ggplot2)
 data(mpg)
@@ -126,4 +126,122 @@ ggplot(data = mpg) +
 #################
 # Section 3.5.1 #
 #################
+
+# 1. What happens if you facet on a continuous variable?
+
+ggplot(data = mpg) + 
+geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_wrap(~ cty, nrow = 2)
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = cty, y = hwy)) + 
+  facet_wrap(~ displ, nrow = 2)
+
+# Horrible things: every distinct value gets its own
+# facet. Not good.
+
+# 2. What do the empty cells in plot with 
+# facet_grid(drv ~ cyl) mean? How do they relate to this plot?
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = drv, y = cyl))
+
+# It means that there are no cars with those drv-cyl
+# combinations. The empty ones appear at the same places
+# as where there are no points in the (silly) scatterplot.
+
+# 3. What plots does the following code make? 
+# What does . do?
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(drv ~ .)
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(. ~ cyl)
+
+# The same plots as the facet_grid(drv ~ cyl), but 
+# combined or summed or marginalized over the other.
+# The . means something like "nothing" (although 
+# sometimes it means "everything")
+
+#################
+# Section 3.6.1 #
+#################
+
+# 1. What geom would you use to draw a line chart? 
+# A boxplot? A histogram? An area chart?
+
+# These all have a geom with the same name!
+
+# 2. Run this code in your head and predict what 
+# the output will look like. Then, run the code 
+# in R and check your predictions.
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy, color = drv)) + 
+  geom_point() + 
+  geom_smooth(se = FALSE)
+
+# 3. What does show.legend = FALSE do? What happens 
+# if you remove it? Why do you think I used it earlier 
+# in the chapter? 
+
+ggplot(data = mpg) +
+  geom_smooth(
+    mapping = aes(x = displ, y = hwy, color = drv) #,
+    #show.legend = FALSE
+  )
+
+# It suppresses the legend from showing. If you remove it, 
+# it shows again (by default). It was used (possibly)
+# to match the other two plots which didn't have a legend 
+# at all.
+
+# 4. What does the se argument to geom_smooth() do?
+
+# display confidence interval around smooth? 
+# (TRUE by default, see level to control
+
+# level: level of confidence interval to use 
+# (0.95 by default)
+
+# 5. Will these two graphs look different? Why/why not?
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  geom_smooth()
+
+ggplot() + 
+  geom_point(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_smooth(data = mpg, mapping = aes(x = displ, y = hwy))
+
+# They will look the same: the data and mappings given inside
+# ggplot are used in all the geoms, unless otherwise stated
+
+# 6. Recreate the R code necessary to generate 
+# the following graphs.
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  geom_smooth(se=FALSE)
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  geom_smooth(aes(group=drv),se=FALSE)
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy,col=drv)) + 
+  geom_point() + 
+  geom_smooth(se=FALSE)
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(aes(col=drv)) + 
+  geom_smooth(se=FALSE)
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(aes(col=drv)) + 
+  geom_smooth(aes(lty=drv),se=FALSE)
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(aes(fill=drv), size=3,pch=21, col="white", stroke=2)
 
