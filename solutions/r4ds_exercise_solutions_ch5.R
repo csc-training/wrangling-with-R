@@ -113,4 +113,98 @@ tmp <- mutate(tmp,dep_delay_calc=dep_time_m-sched_dep_time_m)
 tmp <- select(tmp,dep_delay_calc,dep_delay) 
 #those two should be the same (they are, mostly, but not all)
 
-# 4. 
+# 4. Find the 10 most delayed flights using a ranking function. 
+# How do you want to handle ties? Carefully read the 
+# documentation for min_rank().
+
+?min_rank
+tmp <- mutate(flights,most_delayed=min_rank(desc(arr_delay)))
+tmp <- filter(tmp,most_delayed<11)
+
+#Handling the ties doesn't actually affect the result at all.
+
+#################
+# Section 5.6.7 #
+#################
+
+# 1. Brainstorm at least 5 different ways to assess the 
+# typical delay characteristics of a group of flights. 
+
+# Note that this exercise is asking you to think and discuss,
+# not write code! Here are some ideas:
+
+# - means and medians obviously, but maybe only of actual
+# delays, rounding early departures/arrivals to 0?
+# - only count how often the flight is considerably late
+# - find the average/median of only considerable delays
+# - average of the weekly worst delay (of a daily recurring flight)
+# - the upper quartile etc. instead of middle point measures
+
+# 2. Come up with another approach that will give you the 
+# same output as not_cancelled %>% count(dest) and 
+# not_cancelled %>% count(tailnum, wt = distance) 
+# (without using count()).
+
+not_cancelled <- flights %>% 
+  filter(!is.na(dep_delay), !is.na(arr_delay))
+
+# count() is actually a shorthand for this common operation:
+
+tmp <- not_cancelled %>% 
+  group_by(dest) %>% 
+  summarise(n=n())
+
+tmp <- not_cancelled %>% 
+  group_by(tailnum) %>%
+  summarise(n=sum(distance))
+
+# 3. Our definition of cancelled flights 
+# (is.na(dep_delay) | is.na(arr_delay) ) is slightly suboptimal. 
+# Why? Which is the most important column?
+
+tmp <- flights %>% filter(is.na(dep_delay),!is.na(arr_delay))
+# 0 cases of missing dep_delay but not missing arr_delay
+tmp <- flights %>% filter(!is.na(dep_delay),is.na(arr_delay))
+# some cases with the opposite (departed, then returned, and got
+# cancelled?)
+# So, it would be enough to check the missing arr_delay
+
+# 4. Look at the number of cancelled flights per day. Is 
+# there a pattern? Is the proportion of cancelled flights 
+# related to the average delay?
+
+tmp <- flights %>% 
+  group_by(year,month,day) %>% 
+  summarise(ncancelled=sum(is.na(arr_delay)))
+
+tmp %>% ggplot() + geom_histogram(aes(ncancelled),binwidth = 10)
+
+# A small number of flights gets cancelled every day, but 
+# sometimes the number goes really high, with a very long tail
+# in the distribution
+
+tmp <- flights %>% 
+  group_by(year,month,day) %>% 
+  summarise(ncancelled=sum(is.na(arr_delay)),
+            avgdelay=mean(arr_delay,na.rm=TRUE))
+
+tmp %>% ggplot(aes(ncancelled,avgdelay)) + geom_point() +
+  geom_smooth(se=FALSE)
+
+# Understandable: some days are just bad for flying. Delays and
+# cancels are correlated.
+
+# 5. Which carrier has the worst delays? 
+
+tmp <- flights %>% group_by(carrier) %>% 
+  summarise(nflights=n(),
+            avgdelay=mean(arr_delay,na.rm=TRUE))
+
+ggplot(flights,aes(carrier,arr_delay)) +
+  geom_boxplot()
+
+tmp <- flights %>% group_by(carrier) %>% 
+  summarise(nflights=n(),
+            avg_delay=mean(arr_delay,na.rm=TRUE),
+            delay_dist=weighted.mean(arr_delay,distance,na.rm=TRUE))
+            
