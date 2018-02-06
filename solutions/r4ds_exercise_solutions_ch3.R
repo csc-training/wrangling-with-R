@@ -243,5 +243,5 @@ ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
   geom_smooth(aes(lty=drv),se=FALSE)
 
 ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
-  geom_point(aes(fill=drv), size=3,pch=21, col="white", stroke=2)
+  geom_point(aes(fill=drv), size=3,shape=21, col="white", stroke=2)
 
